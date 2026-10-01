@@ -57,11 +57,13 @@
 
         /* --- واجهة لوحة الإدارة --- */
         #adminView { display: none; width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.06); }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold-color); padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
         .admin-header h2 { margin: 0; color: var(--primary-color); }
+        .admin-header-actions { display: flex; gap: 10px; }
         .btn-exit { background: #d9534f; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 700; }
+        .btn-change-pass { background: #337ab7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 700; }
 
-        /* إدارة الحلقات داخل لوحة الإدارة */
+        /* إدارة الحلقات */
         .halaqa-box { background: #fdfcf7; border: 1px solid #ebdcb9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .halaqa-box h4 { margin: 0 0 10px 0; color: var(--primary-color); }
         .halaqa-form { display: flex; gap: 10px; margin-bottom: 12px; }
@@ -81,10 +83,12 @@
         .btn-excel { background: #217346; color: white; border: none; font-weight: 700; cursor: pointer; }
         
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 650px; }
         th, td { padding: 12px 10px; text-align: right; border-bottom: 1px solid #eee; font-size: 14px; }
         th { background: var(--primary-color); color: white; }
         tr:hover { background-color: #fafafa; }
+        .btn-delete-student { background: #dc3545; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-family: inherit; }
+        .btn-delete-student:hover { background: #bd2130; }
     </style>
 </head>
 <body>
@@ -135,7 +139,10 @@
     <div id="adminView">
         <div class="admin-header">
             <h2>لوحة الإدارة | دورة زمقتال</h2>
-            <button id="exitAdminBtn" class="btn-exit">خروج من الإدارة</button>
+            <div class="admin-header-actions">
+                <button id="changePassBtn" class="btn-change-pass">تغيير كلمة السر 🔑</button>
+                <button id="exitAdminBtn" class="btn-exit">خروج</button>
+            </div>
         </div>
 
         <!-- إدارة الحلقات -->
@@ -177,10 +184,11 @@
                         <th>الحلقة</th>
                         <th>رقم الهاتف</th>
                         <th>ملاحظات</th>
+                        <th>إجراء</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="5" style="text-align:center;">جاري تحميل المسجلين...</td></tr>
+                    <tr><td colspan="6" style="text-align:center;">جاري تحميل المسجلين...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -189,9 +197,9 @@
     <!-- Firebase Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, onSnapshot, query, orderBy, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // إعدادات Firebase الخاصة بمشروعك الجديد Rwada
+        // إعدادات Firebase الخاصة بمشروعك Rwada
         const firebaseConfig = {
             apiKey: "AIzaSyBAz_JX7aoLpTQuFswT9CoaUiqmXr3AmBw",
             authDomain: "rwada-2901a.firebaseapp.com",
@@ -205,18 +213,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // كلمة سر الدخول للوحة التحكم
-        const ADMIN_PASS = "rawda2026";
-
         const studentView = document.getElementById('studentView');
         const adminView = document.getElementById('adminView');
         const openAdminSecretBtn = document.getElementById('openAdminSecretBtn');
         const exitAdminBtn = document.getElementById('exitAdminBtn');
+        const changePassBtn = document.getElementById('changePassBtn');
 
-        // فتح لوحة الإدارة بطلب كلمة السر
-        openAdminSecretBtn.addEventListener('click', () => {
+        // جلب كلمة السر من السحابة أو استخدام الافتراضية
+        async function getAdminPassword() {
+            try {
+                const passDoc = await getDoc(doc(db, "settings", "adminAuth"));
+                if (passDoc.exists() && passDoc.data().password) {
+                    return passDoc.data().password;
+                }
+            } catch (e) {
+                console.warn("Using local password fallback:", e);
+            }
+            return localStorage.getItem("zamqtal_admin_pass") || "rawda2026";
+        }
+
+        // فتح لوحة الإدارة
+        openAdminSecretBtn.addEventListener('click', async () => {
+            const currentPass = await getAdminPassword();
             const entered = prompt("يرجى إدخال كلمة سر الإدارة:");
-            if (entered === ADMIN_PASS) {
+            if (entered === currentPass) {
                 studentView.style.display = 'none';
                 adminView.style.display = 'block';
                 initAdminDashboard();
@@ -225,7 +245,25 @@
             }
         });
 
-        // زر العودة إلى استمارة التسجيل
+        // تغيير كلمة السر
+        changePassBtn.addEventListener('click', async () => {
+            const newPass = prompt("أدخل كلمة المرور الجديدة للإدارة:");
+            if (newPass && newPass.trim() !== "") {
+                const trimmed = newPass.trim();
+                try {
+                    // حفظها في السحابة
+                    await setDoc(doc(db, "settings", "adminAuth"), { password: trimmed });
+                    localStorage.setItem("zamqtal_admin_pass", trimmed);
+                    alert("تم تغيير كلمة المرور بنجاح إلى: " + trimmed);
+                } catch (err) {
+                    // حفظ محلي احتياطي إذا تعذر الاتصال
+                    localStorage.setItem("zamqtal_admin_pass", trimmed);
+                    alert("تم حفظ كلمة المرور محلياً: " + trimmed);
+                }
+            }
+        });
+
+        // زر الخروج
         exitAdminBtn.addEventListener('click', () => {
             adminView.style.display = 'none';
             studentView.style.display = 'block';
@@ -255,7 +293,7 @@
         }
         loadHalaqas();
 
-        // تسجيل الطالب وإرسال البيانات
+        // إرسال تسجيل الطالب
         const form = document.getElementById('registrationForm');
         const submitBtn = document.getElementById('submitBtn');
         const msg = document.getElementById('message');
@@ -298,11 +336,11 @@
             if (adminInitialized) return;
             adminInitialized = true;
 
+            // 1. مراقبة وإدارة الحلقات
             const halaqasList = document.getElementById('halaqasList');
             const newHalaqaName = document.getElementById('newHalaqaName');
             const addHalaqaBtn = document.getElementById('addHalaqaBtn');
 
-            // مراقبة الحلقات في لوحة الإدارة
             onSnapshot(collection(db, "halaqas"), (snap) => {
                 halaqasList.innerHTML = '';
                 if (snap.empty) halaqasList.innerHTML = '<li>لا توجد حلقات مضافة حالياً.</li>';
@@ -332,20 +370,27 @@
                 }
             });
 
-            // جلب الطلاب في الوقت الفعلي
+            // 2. جلب بيانات الطلاب وحفظ المعرف (ID) لإمكانية الحذف
             const q = query(collection(db, "students"), orderBy("timestamp", "desc"));
             onSnapshot(q, (snapshot) => {
                 allStudents = [];
-                snapshot.forEach(docSnap => allStudents.push(docSnap.data()));
+                snapshot.forEach(docSnap => {
+                    allStudents.push({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
                 renderAdminTable(allStudents);
             });
 
+            // فلترة الفئات
             document.getElementById('filterCategory').addEventListener('change', (e) => {
                 const cat = e.target.value;
                 if (cat === "الكل") renderAdminTable(allStudents);
                 else renderAdminTable(allStudents.filter(s => s.ageGroup === cat));
             });
 
+            // تصدير إكسل
             document.getElementById('exportBtn').addEventListener('click', () => {
                 if (allStudents.length === 0) {
                     alert("لا توجد بيانات مسجلة لتصديرها.");
@@ -365,13 +410,14 @@
             });
         }
 
+        // رسم الجدول مع زر حذف الطالب
         function renderAdminTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             let c1 = 0, c2 = 0;
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد مسجلين حتى الآن.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا يوجد مسجلين حتى الآن.</td></tr>';
             }
 
             data.forEach(s => {
@@ -385,8 +431,24 @@
                     <td>${s.halaqa || "غير محدد"}</td>
                     <td dir="ltr" style="text-align: right;"><a href="https://wa.me/${(s.phone||'').replace(/^0/, '+963')}" target="_blank">${s.phone}</a></td>
                     <td>${s.notes}</td>
+                    <td><button class="btn-delete-student" data-id="${s.id}">حذف 🗑️</button></td>
                 `;
                 tbody.appendChild(tr);
+            });
+
+            // إضافة وظيفة الحذف للأزرار
+            document.querySelectorAll('.btn-delete-student').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const studentId = e.target.getAttribute('data-id');
+                    if (confirm("هل أنت متأكد من رغبتك في حذف هذا الطالب؟ لا يمكن التراجع عن هذه الخطوة.")) {
+                        try {
+                            await deleteDoc(doc(db, "students", studentId));
+                            alert("تم حذف الطالب بنجاح.");
+                        } catch (err) {
+                            alert("حدث خطأ أثناء الحذف: " + err.message);
+                        }
+                    }
+                });
             });
 
             document.getElementById('totalCount').innerText = data.length;
