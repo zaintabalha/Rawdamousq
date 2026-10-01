@@ -3,50 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل دورة زمقتال | مسجد الروضة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <title>دورة زمقتال | مسجد الروضة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { 
             --primary-color: #1a3322; 
             --gold-color: #c09d57; 
             --bg-color: #f7f6f0; 
+            --text-color: #333;
         }
+        * { box-sizing: border-box; }
         body { 
             font-family: 'Cairo', sans-serif; 
             background-color: var(--bg-color); 
             margin: 0; 
             padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
-        .form-container { 
+
+        /* --- واجهة التسجيل --- */
+        .portal-card { 
             background-color: #fff; 
             padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            border-radius: 14px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
             width: 100%; 
-            max-width: 450px; 
+            max-width: 480px; 
             border-top: 5px solid var(--primary-color); 
         }
         .header { text-align: center; margin-bottom: 25px; }
-        .header h2 { color: var(--primary-color); margin: 0 0 10px 0; }
+        .header h2 { color: var(--primary-color); margin: 0 0 8px 0; font-size: 22px; }
         .header p { color: #666; font-size: 14px; margin: 0; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: var(--primary-color); font-weight: bold; font-size: 14px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; box-sizing: border-box; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 7px; color: var(--primary-color); font-weight: 700; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; font-size: 14px; }
         .form-group input:focus, .form-group select:focus { border-color: var(--gold-color); outline: none; }
-        button { width: 100%; padding: 14px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; font-family: inherit; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: var(--gold-color); }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #message { margin-top: 15px; text-align: center; font-weight: bold; display: none; padding: 10px; border-radius: 6px; }
+        .btn-submit { width: 100%; padding: 14px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; transition: 0.3s; }
+        .btn-submit:hover { background-color: var(--gold-color); }
+        .btn-submit:disabled { background-color: #aaa; cursor: not-allowed; }
+        #message { margin-top: 15px; text-align: center; font-weight: 700; display: none; padding: 10px; border-radius: 6px; }
         .success { background-color: #d4edda; color: #155724; }
         .error { background-color: #f8d7da; color: #721c24; }
+
+        /* --- الزر المخفي --- */
+        .footer-secret { margin-top: 25px; text-align: center; }
+        .btn-admin-secret { background: transparent; border: none; color: #c4c4c4; font-size: 12px; cursor: pointer; transition: color 0.3s; font-family: inherit; }
+        .btn-admin-secret:hover { color: var(--gold-color); }
+
+        /* --- واجهة لوحة الإدارة --- */
+        #adminView { display: none; width: 100%; max-width: 950px; background: white; padding: 25px; border-radius: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.06); }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--gold-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .admin-header h2 { margin: 0; color: var(--primary-color); }
+        .btn-exit { background: #d9534f; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 700; }
+
+        /* إدارة الحلقات داخل لوحة الإدارة */
+        .halaqa-box { background: #fdfcf7; border: 1px solid #ebdcb9; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .halaqa-box h4 { margin: 0 0 10px 0; color: var(--primary-color); }
+        .halaqa-form { display: flex; gap: 10px; margin-bottom: 12px; }
+        .halaqa-form input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; }
+        .halaqa-form button { background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 700; }
+        .halaqas-tag-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+        .halaqas-tag-list li { background: white; border: 1px solid #ddd; padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .btn-del-tag { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; cursor: pointer; line-height: 1; padding: 0; }
+
+        /* الإحصائيات */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: var(--bg-color); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e2dfd2; }
+        .stat-card h3 { margin: 5px 0 0 0; color: var(--primary-color); font-size: 24px; }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .toolbar select, .btn-excel { padding: 10px 14px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; }
+        .btn-excel { background: #217346; color: white; border: none; font-weight: 700; cursor: pointer; }
+        
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px 10px; text-align: right; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { background: var(--primary-color); color: white; }
+        tr:hover { background-color: #fafafa; }
     </style>
 </head>
 <body>
-    <div class="form-container">
+
+    <!-- 1. واجهة التسجيل (للطلاب) -->
+    <div id="studentView" class="portal-card">
         <div class="header">
             <h2>التسجيل في دورة زمقتال</h2>
             <p>دورة الفنون القتالية الدفاعية - مسجد الروضة</p>
@@ -78,15 +122,76 @@
                 <label>ملاحظات طبية (اختياري)</label>
                 <input type="text" id="notes" placeholder="أمراض، إصابات سابقة، إلخ...">
             </div>
-            <button type="submit" id="submitBtn">تأكيد التسجيل</button>
+            <button type="submit" id="submitBtn" class="btn-submit">تأكيد التسجيل</button>
             <div id="message"></div>
         </form>
+
+        <div class="footer-secret">
+            <button id="openAdminSecretBtn" class="btn-admin-secret" type="button">Admin</button>
+        </div>
     </div>
 
+    <!-- 2. واجهة الإدارة (المحمية بكلمة سر) -->
+    <div id="adminView">
+        <div class="admin-header">
+            <h2>لوحة الإدارة | دورة زمقتال</h2>
+            <button id="exitAdminBtn" class="btn-exit">خروج من الإدارة</button>
+        </div>
+
+        <!-- إدارة الحلقات -->
+        <div class="halaqa-box">
+            <h4>إدارة الحلقات المتاحة للتسجيل</h4>
+            <div class="halaqa-form">
+                <input type="text" id="newHalaqaName" placeholder="اكتب اسم حلقة جديدة (مثلاً: حلقة الإمام الشافعي)...">
+                <button id="addHalaqaBtn" type="button">إضافة</button>
+            </div>
+            <ul class="halaqas-tag-list" id="halaqasList">
+                <li>جاري التحميل...</li>
+            </ul>
+        </div>
+
+        <!-- الإحصائيات -->
+        <div class="stats-grid">
+            <div class="stat-card">إجمالي المسجلين<h3 id="totalCount">0</h3></div>
+            <div class="stat-card">الفئة الأولى (+16)<h3 id="cat1Count">0</h3></div>
+            <div class="stat-card">الفئة الثانية (8-16)<h3 id="cat2Count">0</h3></div>
+        </div>
+
+        <!-- أزرار الجدول والفلترة -->
+        <div class="toolbar">
+            <select id="filterCategory">
+                <option value="الكل">عرض كل المسجلين</option>
+                <option value="الفئة الأولى (+16 سنة)">الفئة الأولى (+16 سنة)</option>
+                <option value="الفئة الثانية (8 إلى 16 سنة)">الفئة الثانية (8 إلى 16 سنة)</option>
+            </select>
+            <button class="btn-excel" id="exportBtn">تصدير إلى Excel 📊</button>
+        </div>
+
+        <!-- جدول المسجلين -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>الفئة</th>
+                        <th>الحلقة</th>
+                        <th>رقم الهاتف</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="5" style="text-align:center;">جاري تحميل المسجلين...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Firebase Script Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // إعدادات Firebase الخاصة بمشروعك
         const firebaseConfig = {
             apiKey: "AIzaSyDtoQqjmj-3ZrSC8cHFSh3jZuHmXLlOYeE",
             authDomain: "rawda-zamaktl.firebaseapp.com",
@@ -99,39 +204,66 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // جلب الحلقات
+        // --- كلمة سر لوحة الإدارة ---
+        const ADMIN_PASS = "rawda2026"; // يمكنك تغييرها من هنا متى أردت
+
+        const studentView = document.getElementById('studentView');
+        const adminView = document.getElementById('adminView');
+        const openAdminSecretBtn = document.getElementById('openAdminSecretBtn');
+        const exitAdminBtn = document.getElementById('exitAdminBtn');
+
+        // فتح لوحة الإدارة بطلب كلمة السر
+        openAdminSecretBtn.addEventListener('click', () => {
+            const entered = prompt("يرجى إدخال كلمة سر الإدارة:");
+            if (entered === ADMIN_PASS) {
+                studentView.style.display = 'none';
+                adminView.style.display = 'block';
+                initAdminDashboard();
+            } else if (entered !== null) {
+                alert("كلمة المرور غير صحيحة!");
+            }
+        });
+
+        // زر العودة إلى استمارة التسجيل
+        exitAdminBtn.addEventListener('click', () => {
+            adminView.style.display = 'none';
+            studentView.style.display = 'block';
+            loadHalaqas(); // تحديث الحلقات في واجهة الطالب إذا طرأ تغيير
+        });
+
+        // --- جلب الحلقات لصفحة تسجيل الطلاب ---
         async function loadHalaqas() {
             const halaqaSelect = document.getElementById('halaqa');
             try {
                 const querySnapshot = await getDocs(collection(db, "halaqas"));
                 halaqaSelect.innerHTML = '<option value="" disabled selected>اختر حلقة الطالب...</option>';
-                querySnapshot.forEach((doc) => {
-                    const halaqaName = doc.data().name;
-                    const option = document.createElement('option');
-                    option.value = halaqaName;
-                    option.textContent = halaqaName;
-                    halaqaSelect.appendChild(option);
+                querySnapshot.forEach((docSnap) => {
+                    const hName = docSnap.data().name;
+                    const opt = document.createElement('option');
+                    opt.value = hName;
+                    opt.textContent = hName;
+                    halaqaSelect.appendChild(opt);
                 });
                 const noHalaqa = document.createElement('option');
                 noHalaqa.value = "لا يوجد (غير مسجل بحلقة)";
                 noHalaqa.textContent = "لا يوجد (غير مسجل بحلقة)";
                 halaqaSelect.appendChild(noHalaqa);
-            } catch (error) {
-                halaqaSelect.innerHTML = '<option value="" disabled selected>خطأ في تحميل الحلقات</option>';
+            } catch (err) {
+                halaqaSelect.innerHTML = '<option value="لا يوجد (غير مسجل بحلقة)" selected>لا يوجد (غير مسجل بحلقة)</option>';
             }
         }
         loadHalaqas();
 
-        // إرسال الفورم
+        // --- تسجيل الطالب وإرسال البيانات ---
         const form = document.getElementById('registrationForm');
         const submitBtn = document.getElementById('submitBtn');
-        const messageDiv = document.getElementById('message');
+        const msg = document.getElementById('message');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             submitBtn.disabled = true;
             submitBtn.innerText = "جاري الإرسال...";
-            messageDiv.style.display = "none";
+            msg.style.display = 'none';
 
             try {
                 await addDoc(collection(db, "students"), {
@@ -142,20 +274,126 @@
                     notes: document.getElementById('notes').value.trim() || "لا يوجد",
                     timestamp: serverTimestamp()
                 });
-                
-                messageDiv.className = "success";
-                messageDiv.innerText = "تم التسجيل بنجاح!";
-                messageDiv.style.display = "block";
+                msg.className = "success";
+                msg.innerText = "تم التسجيل بنجاح! بارك الله بكم.";
+                msg.style.display = "block";
                 form.reset();
             } catch (error) {
-                messageDiv.className = "error";
-                messageDiv.innerText = "حدث خطأ أثناء التسجيل. تأكد من اتصالك بالإنترنت.";
-                messageDiv.style.display = "block";
+                msg.className = "error";
+                msg.innerText = "تعذر الإرسال، يرجى المحاولة مرة أخرى.";
+                msg.style.display = "block";
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "تأكيد التسجيل";
             }
         });
+
+        // --- مهام لوحة الإدارة ---
+        let adminInitialized = false;
+        let allStudents = [];
+
+        function initAdminDashboard() {
+            if (adminInitialized) return;
+            adminInitialized = true;
+
+            // 1. مراقبة الحلقات داخل لوحة الإدارة
+            const halaqasList = document.getElementById('halaqasList');
+            const newHalaqaName = document.getElementById('newHalaqaName');
+            const addHalaqaBtn = document.getElementById('addHalaqaBtn');
+
+            onSnapshot(collection(db, "halaqas"), (snap) => {
+                halaqasList.innerHTML = '';
+                if (snap.empty) halaqasList.innerHTML = '<li>لا توجد حلقات مضافة حالياً.</li>';
+                snap.forEach((docSnap) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `${docSnap.data().name} <button class="btn-del-tag" data-id="${docSnap.id}" title="حذف">&times;</button>`;
+                    halaqasList.appendChild(li);
+                });
+
+                document.querySelectorAll('.btn-del-tag').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const hId = e.target.getAttribute('data-id');
+                        if (confirm('هل تريد بالتأكيد حذف هذه الحلقة؟')) {
+                            await deleteDoc(doc(db, 'halaqas', hId));
+                        }
+                    });
+                });
+            });
+
+            addHalaqaBtn.addEventListener('click', async () => {
+                const val = newHalaqaName.value.trim();
+                if (val) {
+                    addHalaqaBtn.disabled = true;
+                    await addDoc(collection(db, "halaqas"), { name: val });
+                    newHalaqaName.value = '';
+                    addHalaqaBtn.disabled = false;
+                }
+            });
+
+            // 2. جلب بيانات الطلاب المحدثة Realtime
+            const q = query(collection(db, "students"), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snapshot) => {
+                allStudents = [];
+                snapshot.forEach(docSnap => allStudents.push(docSnap.data()));
+                renderAdminTable(allStudents);
+            });
+
+            // فلترة الفئات
+            document.getElementById('filterCategory').addEventListener('change', (e) => {
+                const cat = e.target.value;
+                if (cat === "الكل") renderAdminTable(allStudents);
+                else renderAdminTable(allStudents.filter(s => s.ageGroup === cat));
+            });
+
+            // تصدير إكسل
+            document.getElementById('exportBtn').addEventListener('click', () => {
+                if (allStudents.length === 0) {
+                    alert("لا توجد بيانات مسجلة لتصديرها.");
+                    return;
+                }
+                const formatted = allStudents.map(s => ({
+                    "الاسم الثلاثي": s.name,
+                    "الفئة العمرية": s.ageGroup,
+                    "الحلقة": s.halaqa,
+                    "رقم الهاتف": s.phone,
+                    "ملاحظات طبية": s.notes
+                }));
+                const ws = XLSX.utils.json_to_sheet(formatted);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
+                XLSX.writeFile(wb, "مسجلو_دورة_زمقتال.xlsx");
+            });
+        }
+
+        function renderAdminTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            let c1 = 0, c2 = 0;
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا يوجد مسجلين حتى الآن.</td></tr>';
+            }
+
+            data.forEach(s => {
+                if (s.ageGroup && s.ageGroup.includes("الأولى")) c1++;
+                if (s.ageGroup && s.ageGroup.includes("الثانية")) c2++;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${s.name}</td>
+                    <td>${s.ageGroup}</td>
+                    <td>${s.halaqa || "غير محدد"}</td>
+                    <td dir="ltr" style="text-align: right;"><a href="https://wa.me/${(s.phone||'').replace(/^0/, '+963')}" target="_blank">${s.phone}</a></td>
+                    <td>${s.notes}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('totalCount').innerText = data.length;
+            document.getElementById('cat1Count').innerText = c1;
+            document.getElementById('cat2Count').innerText = c2;
+        }
     </script>
 </body>
 </html>
+ج
